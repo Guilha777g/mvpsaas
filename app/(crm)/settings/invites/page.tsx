@@ -20,6 +20,7 @@ export default function InvitesPage() {
   const [maxUses, setMaxUses] = useState(1)
   const [expiresInDays, setExpiresInDays] = useState(30)
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
 
   if (!sessionLoading && session?.role !== 'admin') {
@@ -30,11 +31,12 @@ export default function InvitesPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
+    setError(null)
     try {
       const res = await fetch('/api/admin/invite-codes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantName, email: email || undefined, maxUses, expiresInDays }),
+        body: JSON.stringify({ tenantName, email: email.trim() || undefined, maxUses, expiresInDays }),
       })
       if (res.ok) {
         setTenantName('')
@@ -42,7 +44,12 @@ export default function InvitesPage() {
         setMaxUses(1)
         setExpiresInDays(30)
         mutate('/api/admin/invite-codes')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || `Erro ${res.status}`)
       }
+    } catch {
+      setError('Erro de conexão')
     } finally {
       setSubmitting(false)
     }
@@ -124,6 +131,11 @@ export default function InvitesPage() {
                   />
                 </div>
               </div>
+              {error && (
+                <div className="text-xs text-red-400 font-mono bg-red-400/10 border border-red-400/20 rounded px-3 py-2">
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={submitting || !tenantName}

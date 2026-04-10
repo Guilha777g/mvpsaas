@@ -53,10 +53,13 @@ export const createActivitySchema = z.object({
 
 export const createInviteCodeSchema = z.object({
   tenantName: z.string().min(2, 'Nome da empresa obrigatório'),
-  email: z.string().email().optional(),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
   maxUses: z.number().int().min(1).default(1),
   expiresInDays: z.number().int().min(1).max(365).default(30),
-})
+}).transform(data => ({
+  ...data,
+  email: data.email || undefined,
+}))
 
 export const registerWithInviteSchema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),

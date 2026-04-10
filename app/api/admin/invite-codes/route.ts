@@ -23,7 +23,9 @@ export async function GET() {
       .orderBy(desc(inviteCodes.createdAt))
 
     return NextResponse.json(codes)
-  } catch (error) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : ''
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     console.error('GET invite codes error:', error)
     return NextResponse.json({ error: 'Erro ao listar convites' }, { status: 500 })
   }
@@ -49,13 +51,15 @@ export async function POST(req: NextRequest) {
     const [invite] = await db.insert(inviteCodes).values({
       code: generateCode(),
       tenantName: parsed.data.tenantName,
-      email: parsed.data.email,
+      email: parsed.data.email || null,
       maxUses: parsed.data.maxUses,
       expiresAt,
     }).returning()
 
     return NextResponse.json(invite, { status: 201 })
-  } catch (error) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : ''
+    if (msg === 'Unauthorized') return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     console.error('POST invite code error:', error)
     return NextResponse.json({ error: 'Erro ao criar convite' }, { status: 500 })
   }
