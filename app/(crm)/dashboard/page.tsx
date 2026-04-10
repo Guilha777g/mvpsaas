@@ -118,7 +118,8 @@ export default function DashboardPage() {
                           <div className="font-mono text-[9px] text-dim mt-0.5">
                             {a.type === 'agent_update' ? 'Agente IA' :
                              a.type === 'stage_change' ? 'Pipeline' :
-                             a.type === 'handoff' ? 'Handoff' : 'Nota'}
+                             a.type === 'handoff' ? 'Handoff' :
+                             a.type === 'lead_edit' ? 'Edição' : 'Nota'}
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-0.5 flex-shrink-0">

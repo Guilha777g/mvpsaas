@@ -14,9 +14,10 @@ export default function SettingsPage() {
     { href: '/settings/pipeline', icon: '⬡', title: 'Pipeline', desc: 'Gerenciar etapas do Kanban', adminOnly: false },
     { href: '/settings/team', icon: '◎', title: 'Equipe', desc: 'Convidar e gerenciar membros', adminOnly: false },
     { href: '/settings/agent', icon: '◈', title: 'Agente IA', desc: 'Configurar integração n8n', adminOnly: true },
+    { href: '/settings/invites', icon: '✉', title: 'Convites', desc: 'Criar e gerenciar códigos de convite', adminOnly: true },
   ]
 
-  const sections = allSections.filter(s => !s.adminOnly || session?.role === 'owner')
+  const sections = allSections.filter(s => !s.adminOnly || session?.role === 'admin')
 
   return (
     <>

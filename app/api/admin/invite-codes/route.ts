@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { inviteCodes } from '@/lib/db/schema'
 import { requireSession } from '@/lib/auth/middleware'
+import { isAdmin } from '@/lib/auth/admin'
 import { createInviteCodeSchema } from '@/lib/validations'
 import { desc } from 'drizzle-orm'
 import crypto from 'crypto'
@@ -13,7 +14,7 @@ function generateCode(): string {
 export async function GET() {
   try {
     const session = await requireSession()
-    if (session.role !== 'owner') {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
     }
 
@@ -31,7 +32,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession()
-    if (session.role !== 'owner') {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
     }
 

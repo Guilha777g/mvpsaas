@@ -26,8 +26,13 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, secret)
-    return NextResponse.next()
+    const { payload } = await jwtVerify(token, secret)
+    // Admin: inject role header for downstream use
+    const response = NextResponse.next()
+    if (payload.role === 'admin') {
+      response.headers.set('x-user-role', 'admin')
+    }
+    return response
   } catch {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 })

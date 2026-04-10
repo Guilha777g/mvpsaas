@@ -127,6 +127,7 @@ export function DealDetailPanel({ dealId, deals, stages, onClose, onUpdated }: D
           contactId: deal.contact.id,
           type: 'lead_edit',
           content: activityContent,
+          authorType: 'user',
         }),
       })
       if (activityRes.ok) {

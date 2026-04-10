@@ -16,12 +16,22 @@ const navItems: NavItem[] = [
   { href: '/settings', icon: Settings, label: 'Configurações' },
 ]
 
+interface Tenant {
+  id: string
+  name: string
+  slug: string
+}
+
 interface SidebarProps {
   tenantName: string
   dealCount: number
+  role?: string
+  tenants?: Tenant[]
+  selectedTenantId?: string | null
+  onSelectTenant?: (tenantId: string | null) => void
 }
 
-export function Sidebar({ tenantName, dealCount }: SidebarProps) {
+export function Sidebar({ tenantName, dealCount, role, tenants, selectedTenantId, onSelectTenant }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -38,12 +48,25 @@ export function Sidebar({ tenantName, dealCount }: SidebarProps) {
       {/* Client */}
       <div className="px-6 py-4 border-b border-white/[.04]">
         <div className="font-mono text-[10px] tracking-[.18em] text-dim uppercase mb-1.5">Cliente</div>
-        <div className="text-[13px] font-medium text-fg flex items-center gap-1.5">
-          <span className="truncate">{tenantName}</span>
-          <span className="font-mono text-[10px] bg-gold-subtle border border-gold/20 text-gold px-1.5 py-0.5 rounded-sm tracking-widest flex-shrink-0">
-            ATIVO
-          </span>
-        </div>
+        {role === 'admin' && tenants && onSelectTenant ? (
+          <select
+            value={selectedTenantId || ''}
+            onChange={(e) => onSelectTenant(e.target.value || null)}
+            className="w-full bg-surface-3 border border-white/[.07] rounded px-2 py-1.5 text-[12px] text-fg font-mono appearance-none cursor-pointer focus:border-gold/30 focus:outline-none transition-all"
+          >
+            <option value="">— Todos os clientes —</option>
+            {tenants.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        ) : (
+          <div className="text-[13px] font-medium text-fg flex items-center gap-1.5">
+            <span className="truncate">{tenantName}</span>
+            <span className="font-mono text-[10px] bg-gold-subtle border border-gold/20 text-gold px-1.5 py-0.5 rounded-sm tracking-widest flex-shrink-0">
+              ATIVO
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Nav */}

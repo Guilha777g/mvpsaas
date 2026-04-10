@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { users, tenants } from '@/lib/db/schema'
 import { comparePassword, signJWT } from '@/lib/auth'
+import { getAdminCredentials, isAdminConfigured, signAdminJWT } from '@/lib/auth/admin'
 import { loginSchema } from '@/lib/validations'
 import { eq } from 'drizzle-orm'
 import { cookies } from 'next/headers'
@@ -16,6 +17,23 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, password } = parsed.data
+
+    // Check admin login via ENV first
+    if (isAdminConfigured()) {
+      const admin = getAdminCredentials()
+      if (email === admin.email && password === admin.password) {
+        const token = await signAdminJWT()
+        const cookieStore = await cookies()
+        cookieStore.set('session', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+          path: '/',
+        })
+        return NextResponse.json({ success: true })
+      }
+    }
 
     // Find user by email (any tenant)
     const userRows = await db.select({
