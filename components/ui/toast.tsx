@@ -6,14 +6,20 @@ import { CheckCircle, XCircle, Info, X } from 'lucide-react'
 
 type ToastVariant = 'success' | 'error' | 'info'
 
+interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 interface Toast {
   id: number
   message: string
   variant: ToastVariant
+  action?: ToastAction
 }
 
 interface ToastContextType {
-  toast: (message: string, variant?: ToastVariant) => void
+  toast: (message: string, variant?: ToastVariant, action?: ToastAction) => void
 }
 
 const ToastContext = createContext<ToastContextType>({ toast: () => {} })
@@ -27,12 +33,12 @@ let nextId = 0
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
-  const addToast = useCallback((message: string, variant: ToastVariant = 'info') => {
+  const addToast = useCallback((message: string, variant: ToastVariant = 'info', action?: ToastAction) => {
     const id = nextId++
-    setToasts(prev => [...prev, { id, message, variant }])
+    setToasts(prev => [...prev, { id, message, variant, action }])
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id))
-    }, 3000)
+    }, action ? 8000 : 3000)
   }, [])
 
   const removeToast = useCallback((id: number) => {
@@ -64,6 +70,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               <Icon className={cn('w-4 h-4 flex-shrink-0', v.color)} />
               <span className="text-xs text-fg font-light flex-1">{t.message}</span>
+              {t.action && (
+                <button
+                  onClick={() => { t.action!.onClick(); removeToast(t.id) }}
+                  className={cn('font-mono text-[9px] tracking-[.12em] uppercase px-2.5 py-1 rounded border flex-shrink-0 transition-all', v.color, 'border-current opacity-70 hover:opacity-100')}
+                >
+                  {t.action.label}
+                </button>
+              )}
               <button
                 onClick={() => removeToast(t.id)}
                 className="text-dim hover:text-fg transition-colors flex-shrink-0"
