@@ -2,16 +2,19 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { LayoutDashboard, Kanban, Users, CheckSquare, TrendingUp, Settings, type LucideIcon } from 'lucide-react'
 
-const navItems = [
-  { href: '/dashboard', icon: '◉', label: 'Dashboard' },
-  { href: '/pipeline', icon: '⬡', label: 'Pipeline' },
-  { href: '/contacts', icon: '◎', label: 'Contatos' },
-  { href: '/tasks', icon: '☐', label: 'Tarefas' },
+type NavItem = { href: string; icon: LucideIcon; label: string } | { separator: true }
+
+const navItems: NavItem[] = [
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/pipeline', icon: Kanban, label: 'Pipeline' },
+  { href: '/contacts', icon: Users, label: 'Contatos' },
+  { href: '/tasks', icon: CheckSquare, label: 'Tarefas' },
   { separator: true },
-  { href: '/reports', icon: '↗', label: 'Relatórios' },
-  { href: '/settings', icon: '◈', label: 'Configurações' },
-] as const
+  { href: '/reports', icon: TrendingUp, label: 'Relatórios' },
+  { href: '/settings', icon: Settings, label: 'Configurações' },
+]
 
 interface SidebarProps {
   tenantName: string
@@ -26,7 +29,7 @@ export function Sidebar({ tenantName, dealCount }: SidebarProps) {
     <aside className="w-[220px] flex-shrink-0 bg-surface-1 border-r border-white/[.04] flex flex-col overflow-hidden">
       {/* Logo */}
       <div className="px-6 pt-7 pb-5 border-b border-white/[.04]">
-        <div className="font-mono text-[8px] tracking-[.22em] text-gold uppercase mb-1">CRM</div>
+        <div className="font-mono text-[10px] tracking-[.22em] text-gold uppercase mb-1">CRM</div>
         <div className="font-serif text-xl font-light tracking-wide text-fg">
           Elyon <em className="italic text-gold-light">Nexus</em>
         </div>
@@ -34,10 +37,10 @@ export function Sidebar({ tenantName, dealCount }: SidebarProps) {
 
       {/* Client */}
       <div className="px-6 py-4 border-b border-white/[.04]">
-        <div className="font-mono text-[8px] tracking-[.18em] text-dim uppercase mb-1.5">Cliente</div>
+        <div className="font-mono text-[10px] tracking-[.18em] text-dim uppercase mb-1.5">Cliente</div>
         <div className="text-[13px] font-medium text-fg flex items-center gap-1.5">
           <span className="truncate">{tenantName}</span>
-          <span className="font-mono text-[8px] bg-gold-subtle border border-gold/20 text-gold px-1.5 py-0.5 rounded-sm tracking-widest flex-shrink-0">
+          <span className="font-mono text-[10px] bg-gold-subtle border border-gold/20 text-gold px-1.5 py-0.5 rounded-sm tracking-widest flex-shrink-0">
             ATIVO
           </span>
         </div>
@@ -52,6 +55,7 @@ export function Sidebar({ tenantName, dealCount }: SidebarProps) {
 
           const active = pathname === item.href || pathname.startsWith(item.href + '/')
 
+          const Icon = item.icon
           return (
             <button
               key={item.href}
@@ -63,9 +67,7 @@ export function Sidebar({ tenantName, dealCount }: SidebarProps) {
                   : 'text-dim hover:bg-surface-3 hover:text-fg'
               )}
             >
-              <span className={cn('text-sm w-[18px] text-center flex-shrink-0', active && 'text-gold')}>
-                {item.icon}
-              </span>
+              <Icon className={cn('w-[16px] h-[16px] flex-shrink-0', active ? 'text-gold' : 'text-dim')} />
               {item.label}
               {item.href === '/pipeline' && dealCount > 0 && (
                 <span className="ml-auto badge-gold">{dealCount}</span>
@@ -77,7 +79,7 @@ export function Sidebar({ tenantName, dealCount }: SidebarProps) {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-white/[.04]">
-        <div className="font-mono text-[8px] tracking-[.16em] text-gold/30 uppercase">
+        <div className="font-mono text-[10px] tracking-[.16em] text-gold/30 uppercase">
           Powered by Elyon Nexus
         </div>
       </div>

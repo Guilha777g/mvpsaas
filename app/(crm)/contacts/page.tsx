@@ -5,6 +5,7 @@ import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { Topbar } from '@/components/layout/topbar'
 import { cn, getInitials, getAvatarColor, timeAgo, SPIN_LABELS } from '@/lib/utils'
+import { Users } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -27,11 +28,18 @@ export default function ContactsPage() {
 
       <div className="flex-1 overflow-auto">
         {isLoading ? (
-          <div className="flex items-center justify-center h-40 text-dim text-sm">Carregando...</div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 py-12">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="skeleton h-14 w-full max-w-4xl mx-6 rounded-md" />
+            ))}
+          </div>
         ) : contacts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 gap-2">
-            <div className="text-2xl opacity-30">&#9676;</div>
-            <div className="text-dim text-sm font-light">Nenhum contato encontrado</div>
+          <div className="flex flex-col items-center justify-center h-64 gap-3">
+            <Users className="w-12 h-12 text-dim opacity-20" />
+            <div className="text-sm text-fg font-medium">Nenhum contato ainda</div>
+            <div className="text-xs text-dim font-light text-center max-w-[260px]">
+              {search ? 'Nenhum resultado para essa busca.' : 'Seus contatos aparecerão aqui quando leads entrarem pelo pipeline ou forem adicionados manualmente.'}
+            </div>
           </div>
         ) : (
           <table className="w-full">
@@ -66,14 +74,14 @@ export default function ContactsPage() {
                   <td className="px-6 py-3 text-[13px] text-fg font-mono">{contact.phone || '—'}</td>
                   <td className="px-6 py-3 text-[13px] text-dim">{contact.company || '—'}</td>
                   <td className="px-6 py-3">
-                    <span className="font-mono text-[8px] tracking-wider px-2 py-0.5 rounded-sm uppercase bg-white/[.05] border border-white/[.08] text-dim">
+                    <span className="font-mono text-[10px] tracking-wider px-2 py-0.5 rounded-sm uppercase bg-white/[.05] border border-white/[.08] text-dim">
                       {contact.source || 'manual'}
                     </span>
                   </td>
                   <td className="px-6 py-3">
                     {contact.agentData ? (
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[8px] tracking-wider px-2 py-0.5 rounded-sm uppercase bg-gold-subtle border border-gold/20 text-gold">
+                        <span className="font-mono text-[10px] tracking-wider px-2 py-0.5 rounded-sm uppercase bg-gold-subtle border border-gold/20 text-gold">
                           SPIN {contact.agentData.crm || '?'}
                         </span>
                         {contact.agentData.ultimamsgFrom && (

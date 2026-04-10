@@ -56,7 +56,7 @@ export function DealCard({ deal, index, onClick, onDelete }: DealCardProps) {
       {...listeners}
       onClick={onClick}
       className={cn(
-        'bg-surface-3 border border-white/[.05] rounded-[5px] p-3.5 cursor-grab select-none transition-all',
+        'group bg-surface-3 border border-white/[.05] rounded-[5px] p-3.5 cursor-grab select-none transition-all',
         'hover:border-gold/20 hover:shadow-[0_4px_16px_rgba(0,0,0,.3)]',
         'active:cursor-grabbing active:scale-[.98]',
         isDragging && 'opacity-40 scale-[.97]'
@@ -87,17 +87,17 @@ export function DealCard({ deal, index, onClick, onDelete }: DealCardProps) {
       {/* Tags */}
       <div className="flex gap-1 flex-wrap mb-2.5">
         {deal.agentData && (
-          <span className="font-mono text-[8px] tracking-wider px-[7px] py-[2px] rounded-sm uppercase bg-gold-subtle border border-gold/20 text-gold">
+          <span className="font-mono text-[10px] tracking-wider px-[7px] py-[2px] rounded-sm uppercase bg-gold-subtle border border-gold/20 text-gold">
             Agente IA
           </span>
         )}
         {deal.agentData?.crm && (
-          <span className="font-mono text-[8px] tracking-wider px-[7px] py-[2px] rounded-sm uppercase bg-stage-blue/10 border border-stage-blue/20 text-stage-blue">
+          <span className="font-mono text-[10px] tracking-wider px-[7px] py-[2px] rounded-sm uppercase bg-stage-blue/10 border border-stage-blue/20 text-stage-blue">
             SPIN {deal.agentData.crm}
           </span>
         )}
         {deal.contact.tags?.slice(0, 2).map(tag => (
-          <span key={tag} className="font-mono text-[8px] tracking-wider px-[7px] py-[2px] rounded-sm uppercase bg-white/[.05] border border-white/[.08] text-dim">
+          <span key={tag} className="font-mono text-[10px] tracking-wider px-[7px] py-[2px] rounded-sm uppercase bg-white/[.05] border border-white/[.08] text-dim">
             {tag}
           </span>
         ))}

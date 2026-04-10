@@ -53,10 +53,10 @@ body::after {
 /* ══════ Component utilities ══════ */
 .label-mono {
   font-family: 'DM Mono', monospace;
-  font-size: 8px;
-  letter-spacing: 0.18em;
+  font-size: 10px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(237,233,224,.4);
+  color: rgba(237,233,224,.45);
 }
 
 .title-serif {
@@ -67,12 +67,25 @@ body::after {
 
 .badge-gold {
   font-family: 'DM Mono', monospace;
-  font-size: 9px;
+  font-size: 10px;
   background: rgba(201,168,76,.12);
   border: 1px solid rgba(201,168,76,.2);
   color: #C9A84C;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 10px;
+}
+
+/* ══════ Skeleton shimmer ══════ */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1e1e1e 25%, #2a2a2a 50%, #1e1e1e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
 }
 
 /* ══════ Focus states ══════ */

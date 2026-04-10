@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/ui/toast'
 
 interface AddDealModalProps {
   stageId: string
@@ -20,6 +21,7 @@ export function AddDealModal({ stageId, stages, onClose, onCreated }: AddDealMod
     obs: '',
   })
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
   function update(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -45,10 +47,13 @@ export function AddDealModal({ stageId, stages, onClose, onCreated }: AddDealMod
       })
 
       if (res.ok) {
+        toast('Lead adicionado com sucesso', 'success')
         onCreated()
+      } else {
+        toast('Erro ao adicionar lead', 'error')
       }
     } catch {
-      // ignore
+      toast('Erro ao adicionar lead', 'error')
     } finally {
       setLoading(false)
     }
