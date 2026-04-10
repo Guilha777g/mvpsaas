@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Search, LogOut } from 'lucide-react'
 
 interface TopbarProps {
   title: string
@@ -28,22 +29,21 @@ export function Topbar({ title, subtitle, onSearch, actions }: TopbarProps) {
       <div className="flex items-center gap-2.5">
         {onSearch && (
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-dim pointer-events-none">
-              ⌕
-            </span>
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-dim pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar..."
               onChange={e => onSearch(e.target.value)}
-              className="bg-surface-3 border border-white/[.06] rounded px-3 py-[7px] pl-8 text-xs text-fg w-[200px] font-sans placeholder:text-dim"
+              className="bg-surface-3 border border-white/[.06] rounded px-3 py-[7px] pl-8 text-xs text-fg w-[220px] font-sans placeholder:text-dim focus:border-gold/30 transition-colors"
             />
           </div>
         )}
         {actions}
         <button
           onClick={handleLogout}
-          className="font-mono text-[9px] tracking-[.14em] uppercase px-4 py-2 rounded-[3px] bg-transparent border border-white/[.08] text-dim hover:border-white/[.18] hover:text-fg transition-all"
+          className="flex items-center gap-1.5 font-mono text-[9px] tracking-[.14em] uppercase px-3.5 py-2 rounded-[3px] bg-transparent border border-white/[.08] text-dim hover:border-white/[.18] hover:text-fg transition-all"
         >
+          <LogOut className="w-3 h-3" />
           Sair
         </button>
       </div>

@@ -2,13 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap');
-
 /* ══════ Base ══════ */
 body {
   background: #080808;
   color: #EDE9E0;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans), 'DM Sans', sans-serif;
 }
 
 /* ══════ Noise texture (Elyon) ══════ */
@@ -52,7 +50,7 @@ body::after {
 
 /* ══════ Component utilities ══════ */
 .label-mono {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -60,13 +58,13 @@ body::after {
 }
 
 .title-serif {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-serif), 'Cormorant Garamond', serif;
   font-weight: 300;
   letter-spacing: 0.01em;
 }
 
 .badge-gold {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono), 'DM Mono', monospace;
   font-size: 10px;
   background: rgba(201,168,76,.12);
   border: 1px solid rgba(201,168,76,.2);

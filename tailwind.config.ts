@@ -34,9 +34,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        serif: ['Cormorant Garamond', 'serif'],
-        sans: ['DM Sans', 'sans-serif'],
-        mono: ['DM Mono', 'monospace'],
+        serif: ['var(--font-serif)', 'Cormorant Garamond', 'serif'],
+        sans: ['var(--font-sans)', 'DM Sans', 'sans-serif'],
+        mono: ['var(--font-mono)', 'DM Mono', 'monospace'],
       },
       borderColor: {
         subtle: 'rgba(255,255,255,.04)',

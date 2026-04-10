@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useToast } from '@/components/ui/toast'
+import { X } from 'lucide-react'
 
 interface AddDealModalProps {
   stageId: string
@@ -70,8 +71,8 @@ export function AddDealModal({ stageId, stages, onClose, onCreated }: AddDealMod
           <h2 className="title-serif text-[22px]">
             Novo <em className="italic text-gold-light">Lead</em>
           </h2>
-          <button onClick={onClose} className="text-dim text-lg hover:text-fg transition-colors px-1.5">
-            x
+          <button onClick={onClose} className="text-dim hover:text-fg transition-colors p-1 rounded hover:bg-white/[.05]">
+            <X className="w-4 h-4" />
           </button>
         </div>
 

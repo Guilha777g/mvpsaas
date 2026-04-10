@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { cn, formatCurrency, timeAgo, getInitials, getAvatarColor, SPIN_LABELS } from '@/lib/utils'
+import { X } from 'lucide-react'
 
 interface DealCardProps {
   deal: {
@@ -68,10 +69,10 @@ export function DealCard({ deal, index, onClick, onDelete }: DealCardProps) {
         <div className="flex items-center gap-1.5">
           <button
             onClick={e => { e.stopPropagation(); onDelete() }}
-            className="w-[22px] h-[22px] bg-surface-4 border border-white/[.07] rounded-[3px] flex items-center justify-center text-[11px] text-dim hover:bg-stage-red/20 hover:border-stage-red/30 hover:text-stage-red transition-all opacity-0 group-hover:opacity-100"
+            className="w-[22px] h-[22px] bg-surface-4 border border-white/[.07] rounded-[3px] flex items-center justify-center text-dim hover:bg-stage-red/20 hover:border-stage-red/30 hover:text-stage-red transition-all opacity-0 group-hover:opacity-100"
             title="Remover"
           >
-            x
+            <X className="w-3 h-3" />
           </button>
           <div className={cn('w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0', avatarColor)}>
             {initials}

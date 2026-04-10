@@ -3,6 +3,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { cn, formatCurrencyShort } from '@/lib/utils'
+import { Inbox } from 'lucide-react'
 import { DealCard } from './deal-card'
 
 interface Stage {
@@ -64,9 +65,9 @@ export function KanbanColumn({ stage, deals, index, onDealClick, onDealDelete, o
       >
         <SortableContext items={deals.map(d => d.id)} strategy={verticalListSortingStrategy}>
           {deals.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-6 gap-1.5 opacity-35">
-              <div className="text-lg">&#9676;</div>
-              <div className="text-[11px] text-dim text-center font-light">Nenhum lead</div>
+            <div className="flex flex-col items-center justify-center py-8 gap-2">
+              <Inbox className="w-8 h-8 text-dim opacity-20" />
+              <div className="text-[11px] text-dim text-center font-light">Nenhum lead nesta etapa</div>
             </div>
           )}
           {deals.map((deal: any, i: number) => (
