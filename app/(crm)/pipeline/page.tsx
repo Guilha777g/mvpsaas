@@ -35,28 +35,29 @@ export default function PipelinePage() {
         subtitle={`${deals.length} leads · atualizado hoje, ${today}`}
         onSearch={setSearch}
         actions={
-          <div className="flex gap-2">
-            <button
-              onClick={() => setModalOpen(true)}
-              className="font-mono text-[9px] tracking-[.14em] uppercase px-4 py-2 rounded-[3px] border border-white/[.08] text-dim hover:border-white/[.18] hover:text-fg transition-all"
-            >
-              + Lead
-            </button>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="font-mono text-[9px] tracking-[.14em] uppercase px-4 py-2 rounded-[3px] bg-gold border border-gold text-bg font-semibold hover:bg-gold-light transition-colors"
-            >
-              Novo lead
-            </button>
-          </div>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="font-mono text-[9px] tracking-[.14em] uppercase px-4 py-2 rounded-[3px] bg-gold border border-gold text-bg font-semibold hover:bg-gold-light transition-colors"
+          >
+            + Novo lead
+          </button>
         }
       />
 
       <StatsBar deals={deals} />
 
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-dim text-sm font-light">Carregando pipeline...</div>
+        <div className="flex-1 overflow-hidden px-6 py-5 flex gap-3.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-[250px] flex flex-col gap-2.5">
+              <div className="skeleton h-10 rounded-t-md" />
+              <div className="bg-surface-2 border border-white/[.04] rounded-b-md p-2.5 space-y-2 min-h-[200px]">
+                {Array.from({ length: 3 - i % 2 }).map((_, j) => (
+                  <div key={j} className="skeleton h-[100px] rounded-[5px]" />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <KanbanBoard

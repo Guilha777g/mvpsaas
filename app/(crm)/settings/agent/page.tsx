@@ -8,7 +8,12 @@ const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function AgentSettingsPage() {
   const router = useRouter()
-  const { data: session } = useSWR('/api/auth/me', fetcher)
+  const { data: session, isLoading } = useSWR('/api/auth/me', fetcher)
+
+  if (!isLoading && session && session.role !== 'owner') {
+    router.replace('/settings')
+    return null
+  }
 
   const tenantId = session?.tenantId || 'carregando...'
 

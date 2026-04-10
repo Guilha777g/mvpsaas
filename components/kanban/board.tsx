@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import {
   DndContext,
   DragEndEvent,
@@ -12,6 +12,7 @@ import {
 } from '@dnd-kit/core'
 import { KanbanColumn } from './column'
 import { AddDealModal } from './add-deal-modal'
+import { useToast } from '@/components/ui/toast'
 
 interface KanbanBoardProps {
   initialDeals: any[]
@@ -21,9 +22,18 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ initialDeals, stages, onRefresh }: KanbanBoardProps) {
   const [deals, setDeals] = useState(initialDeals)
+  const { toast } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
   const [modalStageId, setModalStageId] = useState<string | null>(null)
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0 && scrollRef.current) {
+      scrollRef.current.scrollLeft += e.deltaY
+      e.preventDefault()
+    }
+  }, [])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -86,7 +96,9 @@ export function KanbanBoard({ initialDeals, stages, onRefresh }: KanbanBoardProp
 
     try {
       await fetch(`/api/deals/${dealId}`, { method: 'DELETE' })
+      toast('Lead removido', 'info')
     } catch {
+      toast('Erro ao remover lead', 'error')
       onRefresh()
     }
   }
@@ -108,7 +120,11 @@ export function KanbanBoard({ initialDeals, stages, onRefresh }: KanbanBoardProp
         collisionDetection={closestCorners}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex-1 overflow-x-auto overflow-y-hidden px-6 py-5 flex gap-3.5 items-start">
+        <div
+          ref={scrollRef}
+          onWheel={handleWheel}
+          className="flex-1 overflow-x-auto overflow-y-hidden px-6 py-5 flex gap-3.5 items-start"
+        >
           {stages.map((stage: any, i: number) => (
             <KanbanColumn
               key={stage.id}

@@ -1,16 +1,22 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import useSWR from 'swr'
 import { Topbar } from '@/components/layout/topbar'
+
+const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { data: session } = useSWR('/api/auth/me', fetcher)
 
-  const sections = [
-    { href: '/settings/pipeline', icon: '⬡', title: 'Pipeline', desc: 'Gerenciar etapas do Kanban' },
-    { href: '/settings/team', icon: '◎', title: 'Equipe', desc: 'Convidar e gerenciar membros' },
-    { href: '/settings/agent', icon: '◈', title: 'Agente IA', desc: 'Configurar integração n8n' },
+  const allSections = [
+    { href: '/settings/pipeline', icon: '⬡', title: 'Pipeline', desc: 'Gerenciar etapas do Kanban', adminOnly: false },
+    { href: '/settings/team', icon: '◎', title: 'Equipe', desc: 'Convidar e gerenciar membros', adminOnly: false },
+    { href: '/settings/agent', icon: '◈', title: 'Agente IA', desc: 'Configurar integração n8n', adminOnly: true },
   ]
+
+  const sections = allSections.filter(s => !s.adminOnly || session?.role === 'owner')
 
   return (
     <>

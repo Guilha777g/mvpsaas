@@ -1,18 +1,20 @@
 'use client'
 
-import { use, useState } from 'react'
+import { useState } from 'react'
 import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { Topbar } from '@/components/layout/topbar'
 import { cn, formatCurrency, formatDateTime, timeAgo, getInitials, getAvatarColor, SPIN_LABELS } from '@/lib/utils'
+import { useToast } from '@/components/ui/toast'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function ContactDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const router = useRouter()
   const { data, isLoading, mutate } = useSWR(`/api/contacts/${id}`, fetcher)
   const [note, setNote] = useState('')
+  const { toast } = useToast()
 
   if (isLoading) {
     return (
@@ -43,6 +45,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     })
     setNote('')
     mutate()
+    toast('Nota registrada', 'success')
   }
 
   return (
@@ -86,7 +89,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     <span className="text-[11px] text-dim font-light">Tags</span>
                     <div className="flex gap-1">
                       {contact.tags.map((tag: string) => (
-                        <span key={tag} className="font-mono text-[8px] tracking-wider px-2 py-0.5 rounded-sm uppercase bg-white/[.05] border border-white/[.08] text-dim">
+                        <span key={tag} className="font-mono text-[10px] tracking-wider px-2 py-0.5 rounded-sm uppercase bg-white/[.05] border border-white/[.08] text-dim">
                           {tag}
                         </span>
                       ))}
@@ -107,7 +110,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                         <div className="text-sm text-fg">{d.deal.title}</div>
                         <div className="flex items-center gap-2 mt-1">
                           <span
-                            className="font-mono text-[8px] tracking-wider px-2 py-0.5 rounded-sm uppercase"
+                            className="font-mono text-[10px] tracking-wider px-2 py-0.5 rounded-sm uppercase"
                             style={{
                               background: `${d.stage.color}22`,
                               color: d.stage.color,
