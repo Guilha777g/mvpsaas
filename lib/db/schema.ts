@@ -4,6 +4,20 @@ import {
 import { relations } from 'drizzle-orm'
 
 // ══════════════════════════════════════════════
+// INVITE CODES
+// ══════════════════════════════════════════════
+export const inviteCodes = pgTable('invite_codes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').unique().notNull(),
+  tenantName: text('tenant_name').notNull(),
+  email: text('email'),
+  maxUses: integer('max_uses').default(1),
+  usedCount: integer('used_count').default(0),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+})
+
+// ══════════════════════════════════════════════
 // TENANTS
 // ══════════════════════════════════════════════
 export const tenants = pgTable('tenants', {

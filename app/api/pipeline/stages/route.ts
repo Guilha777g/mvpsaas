@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { pipelineStages, pipelines } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, gte } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
 import { createStageSchema } from '@/lib/validations'
+import { sql } from 'drizzle-orm'
 
 export async function GET() {
   try {
@@ -48,6 +49,14 @@ export async function POST(req: NextRequest) {
     if (!pipeline) {
       return NextResponse.json({ error: 'Pipeline não encontrado' }, { status: 404 })
     }
+
+    // Shift existing stages at or after the requested position
+    await db.update(pipelineStages)
+      .set({ position: sql`${pipelineStages.position} + 1` })
+      .where(and(
+        eq(pipelineStages.pipelineId, pipeline.id),
+        gte(pipelineStages.position, parsed.data.position)
+      ))
 
     const [stage] = await db.insert(pipelineStages).values({
       pipelineId: pipeline.id,

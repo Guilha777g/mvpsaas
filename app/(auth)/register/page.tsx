@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ name: '', email: '', password: '', tenantName: '' })
+  const searchParams = useSearchParams()
+  const codeFromUrl = searchParams.get('code') || ''
+
+  const [form, setForm] = useState({ name: '', email: '', password: '', inviteCode: codeFromUrl })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -43,23 +46,23 @@ export default function RegisterPage() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
+        <label className="label-mono block mb-1.5">Código de convite</label>
+        <input
+          type="text"
+          value={form.inviteCode}
+          onChange={e => update('inviteCode', e.target.value.toUpperCase())}
+          placeholder="Ex: A1B2C3D4"
+          className="w-full bg-surface-3 border border-white/[.07] rounded px-3 py-2.5 text-sm text-fg placeholder:text-dim font-mono tracking-wider uppercase"
+          required
+        />
+      </div>
+      <div>
         <label className="label-mono block mb-1.5">Seu nome</label>
         <input
           type="text"
           value={form.name}
           onChange={e => update('name', e.target.value)}
           placeholder="Nome completo"
-          className="w-full bg-surface-3 border border-white/[.07] rounded px-3 py-2.5 text-sm text-fg placeholder:text-dim"
-          required
-        />
-      </div>
-      <div>
-        <label className="label-mono block mb-1.5">Nome da empresa</label>
-        <input
-          type="text"
-          value={form.tenantName}
-          onChange={e => update('tenantName', e.target.value)}
-          placeholder="Sua empresa ou clínica"
           className="w-full bg-surface-3 border border-white/[.07] rounded px-3 py-2.5 text-sm text-fg placeholder:text-dim"
           required
         />

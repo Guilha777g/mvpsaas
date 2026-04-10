@@ -50,3 +50,24 @@ export const createActivitySchema = z.object({
   type: z.enum(['note', 'call', 'email', 'task_done']),
   content: z.string().min(1),
 })
+
+export const createInviteCodeSchema = z.object({
+  tenantName: z.string().min(2, 'Nome da empresa obrigatório'),
+  email: z.string().email().optional(),
+  maxUses: z.number().int().min(1).default(1),
+  expiresInDays: z.number().int().min(1).max(365).default(30),
+})
+
+export const registerWithInviteSchema = z.object({
+  name: z.string().min(2, 'Nome obrigatório'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  inviteCode: z.string().min(1, 'Código de convite obrigatório'),
+})
+
+export const reorderStagesSchema = z.object({
+  stages: z.array(z.object({
+    id: z.string().uuid(),
+    position: z.number().int().min(0),
+  })).min(1),
+})

@@ -1,21 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { tenants, users, pipelines, pipelineStages } from '@/lib/db/schema'
+import { tenants, users, pipelines, pipelineStages, inviteCodes } from '@/lib/db/schema'
 import { hashPassword, signJWT } from '@/lib/auth'
-import { registerSchema } from '@/lib/validations'
+import { registerWithInviteSchema } from '@/lib/validations'
 import { cookies } from 'next/headers'
+import { eq, and, gt, sql } from 'drizzle-orm'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const parsed = registerSchema.safeParse(body)
+    const parsed = registerWithInviteSchema.safeParse(body)
 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
     }
 
-    const { name, email, password, tenantName } = parsed.data
+    const { name, email, password, inviteCode } = parsed.data
 
+    // Validate invite code
+    const [invite] = await db.select()
+      .from(inviteCodes)
+      .where(eq(inviteCodes.code, inviteCode.toUpperCase()))
+      .limit(1)
+
+    if (!invite) {
+      return NextResponse.json({ error: 'Código de convite inválido' }, { status: 403 })
+    }
+
+    if (invite.expiresAt && new Date() > invite.expiresAt) {
+      return NextResponse.json({ error: 'Código de convite expirado' }, { status: 403 })
+    }
+
+    if (invite.usedCount! >= invite.maxUses!) {
+      return NextResponse.json({ error: 'Código de convite já utilizado' }, { status: 403 })
+    }
+
+    if (invite.email && invite.email !== email) {
+      return NextResponse.json({ error: 'Este convite é destinado a outro email' }, { status: 403 })
+    }
+
+    // Use tenant name from invite
+    const tenantName = invite.tenantName
     const slug = tenantName
       .toLowerCase()
       .normalize('NFD')
@@ -58,6 +83,11 @@ export async function POST(req: NextRequest) {
       role: 'owner',
     }).returning()
 
+    // Mark invite code as used
+    await db.update(inviteCodes)
+      .set({ usedCount: sql`${inviteCodes.usedCount} + 1` })
+      .where(eq(inviteCodes.id, invite.id))
+
     // Sign JWT
     const token = await signJWT({
       userId: user.id,
@@ -72,7 +102,7 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     })
 

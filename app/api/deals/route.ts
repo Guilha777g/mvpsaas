@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { deals, contacts, pipelineStages, pipelines, agentLeads } from '@/lib/db/schema'
-import { eq, and, desc } from 'drizzle-orm'
+import { eq, and, desc, inArray } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
 import { createDealSchema } from '@/lib/validations'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await requireSession()
+    const { searchParams } = new URL(req.url)
+    const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 500)
 
     // Get default pipeline
     const [pipeline] = await db.select()
@@ -19,30 +21,37 @@ export async function GET() {
       return NextResponse.json({ deals: [], stages: [] })
     }
 
-    // Get stages
-    const stages = await db.select()
-      .from(pipelineStages)
-      .where(eq(pipelineStages.pipelineId, pipeline.id))
-      .orderBy(pipelineStages.position)
+    // Get stages + deals in parallel
+    const [stages, dealsData] = await Promise.all([
+      db.select()
+        .from(pipelineStages)
+        .where(eq(pipelineStages.pipelineId, pipeline.id))
+        .orderBy(pipelineStages.position),
 
-    // Get deals with contacts
-    const dealsData = await db.select({
-      deal: deals,
-      contact: contacts,
-    })
-      .from(deals)
-      .innerJoin(contacts, eq(deals.contactId, contacts.id))
-      .where(eq(deals.tenantId, session.tenantId))
-      .orderBy(desc(deals.updatedAt))
+      db.select({
+        deal: deals,
+        contact: contacts,
+      })
+        .from(deals)
+        .innerJoin(contacts, eq(deals.contactId, contacts.id))
+        .where(eq(deals.tenantId, session.tenantId))
+        .orderBy(desc(deals.updatedAt))
+        .limit(limit),
+    ])
 
-    // Get agent data for contacts that have it
-    const contactIds = dealsData.map(d => d.contact.phone).filter(Boolean) as string[]
+    // Get agent data only for phones that exist in the deals result set
+    const phoneNumbers = [...new Set(
+      dealsData.map(d => d.contact.phone).filter(Boolean) as string[]
+    )]
     let agentData: Record<string, typeof agentLeads.$inferSelect> = {}
 
-    if (contactIds.length > 0) {
+    if (phoneNumbers.length > 0) {
       const agentRows = await db.select()
         .from(agentLeads)
-        .where(eq(agentLeads.tenantId, session.tenantId))
+        .where(and(
+          eq(agentLeads.tenantId, session.tenantId),
+          inArray(agentLeads.number, phoneNumbers)
+        ))
 
       for (const row of agentRows) {
         if (row.number) {
