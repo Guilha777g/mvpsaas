@@ -59,12 +59,26 @@ export async function GET() {
       .from(contacts)
       .where(eq(contacts.tenantId, tid))
 
-    // Recent activity
-    const recentActivity = await db.select()
+    // Recent activity with contact/deal context
+    const recentActivityRaw = await db.select({
+      id: activities.id,
+      type: activities.type,
+      content: activities.content,
+      authorType: activities.authorType,
+      createdAt: activities.createdAt,
+      contactId: activities.contactId,
+      dealId: activities.dealId,
+      contactName: contacts.name,
+      dealTitle: deals.title,
+    })
       .from(activities)
+      .leftJoin(contacts, eq(activities.contactId, contacts.id))
+      .leftJoin(deals, eq(activities.dealId, deals.id))
       .where(eq(activities.tenantId, tid))
       .orderBy(desc(activities.createdAt))
       .limit(10)
+
+    const recentActivity = recentActivityRaw
 
     // Agent stats
     const agentRows = await db.select()

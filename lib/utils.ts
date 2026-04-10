@@ -37,6 +37,14 @@ export function formatDateTime(date: Date | string | null): string {
   })
 }
 
+export function formatShortDateTime(date: Date | string | null): string {
+  if (!date) return ''
+  const d = typeof date === 'string' ? new Date(date) : date
+  return d.toLocaleString('pt-BR', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+  })
+}
+
 export function timeAgo(date: Date | string | null): string {
   if (!date) return '—'
   const d = typeof date === 'string' ? new Date(date) : date

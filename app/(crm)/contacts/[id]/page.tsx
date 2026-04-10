@@ -4,7 +4,7 @@ import { useState } from 'react'
 import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { Topbar } from '@/components/layout/topbar'
-import { cn, formatCurrency, formatDateTime, timeAgo, getInitials, getAvatarColor, SPIN_LABELS } from '@/lib/utils'
+import { cn, formatCurrency, formatDateTime, timeAgo, formatShortDateTime, getInitials, getAvatarColor, SPIN_LABELS } from '@/lib/utils'
 import { useToast } from '@/components/ui/toast'
 import { Trash2, Pencil, X } from 'lucide-react'
 
@@ -238,8 +238,12 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                             </button>
                           </div>
                         </div>
-                        <div className="font-mono text-[9px] text-dim mt-1">
-                          {a.authorType === 'agent' ? 'Agente IA' : 'Equipe'} &middot; {timeAgo(a.createdAt)}
+                        <div className="font-mono text-[9px] text-dim mt-1 flex items-center gap-1.5">
+                          <span>{a.authorType === 'agent' ? 'Agente IA' : 'Equipe'}</span>
+                          <span>&middot;</span>
+                          <span>{timeAgo(a.createdAt)}</span>
+                          <span>&middot;</span>
+                          <span className="text-dim/60">{formatShortDateTime(a.createdAt)}</span>
                         </div>
                       </>
                     )}

@@ -2,7 +2,7 @@
 
 import useSWR from 'swr'
 import { Topbar } from '@/components/layout/topbar'
-import { formatCurrencyShort, timeAgo } from '@/lib/utils'
+import { formatCurrencyShort, timeAgo, formatShortDateTime } from '@/lib/utils'
 import { TrendingUp, Users, Trophy, Percent, ThumbsDown, Bot } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -108,7 +108,12 @@ export default function DashboardPage() {
                   {recentActivity.map((a: any) => (
                     <div key={a.id} className="py-2.5 border-b border-white/[.04] last:border-0 hover:bg-surface-3/50 -mx-2 px-2 rounded transition-colors">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
+                          {(a.contactName || a.dealTitle) && (
+                            <div className="font-mono text-[10px] text-gold mb-0.5 truncate">
+                              {a.contactName || a.dealTitle}
+                            </div>
+                          )}
                           <div className="text-xs text-fg font-light leading-relaxed">{a.content}</div>
                           <div className="font-mono text-[9px] text-dim mt-0.5">
                             {a.type === 'agent_update' ? 'Agente IA' :
@@ -116,7 +121,10 @@ export default function DashboardPage() {
                              a.type === 'handoff' ? 'Handoff' : 'Nota'}
                           </div>
                         </div>
-                        <span className="text-[10px] text-dim flex-shrink-0">{timeAgo(a.createdAt)}</span>
+                        <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                          <span className="text-[10px] text-dim">{timeAgo(a.createdAt)}</span>
+                          <span className="font-mono text-[9px] text-dim/60">{formatShortDateTime(a.createdAt)}</span>
+                        </div>
                       </div>
                     </div>
                   ))}

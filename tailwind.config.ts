@@ -42,6 +42,15 @@ const config: Config = {
         subtle: 'rgba(255,255,255,.04)',
         'light-border': 'rgba(255,255,255,.07)',
       },
+      keyframes: {
+        slideInRight: {
+          from: { transform: 'translateX(100%)' },
+          to: { transform: 'translateX(0)' },
+        },
+      },
+      animation: {
+        slideInRight: 'slideInRight 0.2s ease-out',
+      },
     },
   },
   plugins: [],

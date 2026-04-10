@@ -12,15 +12,17 @@ import {
 } from '@dnd-kit/core'
 import { KanbanColumn } from './column'
 import { AddDealModal } from './add-deal-modal'
+import { DealDetailPanel } from './deal-detail-panel'
 import { useToast } from '@/components/ui/toast'
 
 interface KanbanBoardProps {
   initialDeals: any[]
   stages: any[]
+  hideAiStages?: boolean
   onRefresh: () => void
 }
 
-export function KanbanBoard({ initialDeals, stages, onRefresh }: KanbanBoardProps) {
+export function KanbanBoard({ initialDeals, stages, hideAiStages = false, onRefresh }: KanbanBoardProps) {
   const [deals, setDeals] = useState(initialDeals)
   const { toast } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
@@ -38,6 +40,9 @@ export function KanbanBoard({ initialDeals, stages, onRefresh }: KanbanBoardProp
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
+
+  // Filter stages
+  const visibleStages = hideAiStages ? stages.filter((s: any) => !s.isSystem) : stages
 
   // Group deals by stage
   const dealsByStage: Record<string, any[]> = {}
@@ -125,7 +130,7 @@ export function KanbanBoard({ initialDeals, stages, onRefresh }: KanbanBoardProp
           onWheel={handleWheel}
           className="flex-1 overflow-x-auto overflow-y-hidden px-6 py-5 flex gap-3.5 items-start"
         >
-          {stages.map((stage: any, i: number) => (
+          {visibleStages.map((stage: any, i: number) => (
             <KanbanColumn
               key={stage.id}
               stage={stage}
@@ -145,6 +150,16 @@ export function KanbanBoard({ initialDeals, stages, onRefresh }: KanbanBoardProp
           stages={stages}
           onClose={() => setModalOpen(false)}
           onCreated={handleDealCreated}
+        />
+      )}
+
+      {selectedDealId && (
+        <DealDetailPanel
+          dealId={selectedDealId}
+          deals={deals}
+          stages={stages}
+          onClose={() => setSelectedDealId(null)}
+          onUpdated={() => { setSelectedDealId(null); onRefresh() }}
         />
       )}
     </>
