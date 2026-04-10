@@ -60,6 +60,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 }
 
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await requireSession()
+    const { id } = await params
+
+    const [deleted] = await db.delete(contacts)
+      .where(and(eq(contacts.id, id), eq(contacts.tenantId, session.tenantId)))
+      .returning()
+
+    if (!deleted) {
+      return NextResponse.json({ error: 'Contato não encontrado' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('DELETE contact error:', error)
+    return NextResponse.json({ error: 'Erro ao excluir contato' }, { status: 500 })
+  }
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireSession()

@@ -5,18 +5,32 @@ import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { Topbar } from '@/components/layout/topbar'
 import { cn, getInitials, getAvatarColor, timeAgo, SPIN_LABELS } from '@/lib/utils'
-import { Users } from 'lucide-react'
+import { useToast } from '@/components/ui/toast'
+import { Users, Trash2 } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function ContactsPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [search, setSearch] = useState('')
-  const { data: contacts = [], isLoading } = useSWR(
+  const { data: contacts = [], isLoading, mutate } = useSWR(
     `/api/contacts${search ? `?search=${encodeURIComponent(search)}` : ''}`,
     fetcher,
     { refreshInterval: 30000 }
   )
+
+  async function deleteContact(e: React.MouseEvent, id: string) {
+    e.stopPropagation()
+    if (!confirm('Excluir este contato? Todos os deals e atividades relacionados serão removidos.')) return
+    const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      toast('Contato excluído', 'info')
+      mutate()
+    } else {
+      toast('Erro ao excluir contato', 'error')
+    }
+  }
 
   return (
     <>
@@ -51,6 +65,7 @@ export default function ContactsPage() {
                 <th className="label-mono text-left px-6 py-3">Origem</th>
                 <th className="label-mono text-left px-6 py-3">Agente</th>
                 <th className="label-mono text-left px-6 py-3">Atualizado</th>
+                <th className="label-mono px-6 py-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -58,7 +73,7 @@ export default function ContactsPage() {
                 <tr
                   key={contact.id}
                   onClick={() => router.push(`/contacts/${contact.id}`)}
-                  className="border-b border-white/[.04] hover:bg-surface-3 cursor-pointer transition-colors"
+                  className="group border-b border-white/[.04] hover:bg-surface-3 cursor-pointer transition-colors"
                 >
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-3">
@@ -95,6 +110,15 @@ export default function ContactsPage() {
                     )}
                   </td>
                   <td className="px-6 py-3 text-[11px] text-dim">{timeAgo(contact.updatedAt)}</td>
+                  <td className="px-6 py-3">
+                    <button
+                      onClick={(e) => deleteContact(e, contact.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-stage-red/10 text-dim hover:text-stage-red transition-all"
+                      title="Excluir contato"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

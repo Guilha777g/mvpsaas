@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Topbar } from '@/components/layout/topbar'
 import { cn, formatCurrency, formatDateTime, timeAgo, getInitials, getAvatarColor, SPIN_LABELS } from '@/lib/utils'
 import { useToast } from '@/components/ui/toast'
+import { Trash2, Pencil, X } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -14,7 +15,46 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
   const router = useRouter()
   const { data, isLoading, mutate } = useSWR(`/api/contacts/${id}`, fetcher)
   const [note, setNote] = useState('')
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState('')
   const { toast } = useToast()
+
+  async function deleteContact() {
+    if (!confirm('Excluir este contato? Todos os deals e atividades relacionados serão removidos.')) return
+    const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      toast('Contato excluído', 'info')
+      router.push('/contacts')
+    } else {
+      toast('Erro ao excluir contato', 'error')
+    }
+  }
+
+  async function deleteActivity(activityId: string) {
+    const res = await fetch(`/api/activities/${activityId}`, { method: 'DELETE' })
+    if (res.ok) {
+      toast('Atividade removida', 'info')
+      mutate()
+    } else {
+      toast('Erro ao remover atividade', 'error')
+    }
+  }
+
+  async function updateActivity(activityId: string) {
+    if (!editContent.trim()) return
+    const res = await fetch(`/api/activities/${activityId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: editContent }),
+    })
+    if (res.ok) {
+      toast('Atividade atualizada', 'success')
+      setEditingActivityId(null)
+      mutate()
+    } else {
+      toast('Erro ao atualizar', 'error')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -54,12 +94,21 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
         title={contact.name}
         subtitle={contact.company || contact.phone || ''}
         actions={
-          <button
-            onClick={() => router.back()}
-            className="font-mono text-[9px] tracking-[.14em] uppercase px-4 py-2 rounded-[3px] border border-white/[.08] text-dim hover:text-fg transition-all"
-          >
-            Voltar
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={deleteContact}
+              className="flex items-center gap-1.5 font-mono text-[9px] tracking-[.14em] uppercase px-3.5 py-2 rounded-[3px] border border-stage-red/20 text-stage-red hover:bg-stage-red/10 transition-all"
+            >
+              <Trash2 className="w-3 h-3" />
+              Excluir
+            </button>
+            <button
+              onClick={() => router.back()}
+              className="font-mono text-[9px] tracking-[.14em] uppercase px-4 py-2 rounded-[3px] border border-white/[.08] text-dim hover:text-fg transition-all"
+            >
+              Voltar
+            </button>
+          </div>
         }
       />
 
@@ -152,11 +201,48 @@ export default function ContactDetailPage({ params }: { params: { id: string } }
                   <div className="text-xs text-dim font-light py-2">Nenhuma atividade ainda.</div>
                 )}
                 {activities?.map((a: any) => (
-                  <div key={a.id} className="py-2.5 border-b border-white/[.04] last:border-0">
-                    <div className="text-xs text-fg font-light leading-relaxed">{a.content}</div>
-                    <div className="font-mono text-[9px] text-dim mt-1">
-                      {a.authorType === 'agent' ? 'Agente IA' : 'Equipe'} &middot; {timeAgo(a.createdAt)}
-                    </div>
+                  <div key={a.id} className="group/activity py-2.5 border-b border-white/[.04] last:border-0">
+                    {editingActivityId === a.id ? (
+                      <div className="flex gap-2">
+                        <input
+                          value={editContent}
+                          onChange={e => setEditContent(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') updateActivity(a.id)
+                            if (e.key === 'Escape') setEditingActivityId(null)
+                          }}
+                          className="flex-1 bg-surface-3 border border-gold/30 rounded px-2.5 py-1.5 text-xs text-fg"
+                          autoFocus
+                        />
+                        <button onClick={() => updateActivity(a.id)} className="text-[10px] text-gold hover:text-gold-light transition-colors">Salvar</button>
+                        <button onClick={() => setEditingActivityId(null)} className="text-[10px] text-dim hover:text-fg transition-colors">Cancelar</button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="text-xs text-fg font-light leading-relaxed flex-1">{a.content}</div>
+                          <div className="flex items-center gap-1 opacity-30 group-hover/activity:opacity-100 transition-opacity flex-shrink-0">
+                            <button
+                              onClick={() => { setEditingActivityId(a.id); setEditContent(a.content || '') }}
+                              className="p-1 rounded hover:bg-white/[.05] text-dim hover:text-fg transition-all"
+                              title="Editar"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => deleteActivity(a.id)}
+                              className="p-1 rounded hover:bg-stage-red/10 text-dim hover:text-stage-red transition-all"
+                              title="Excluir"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="font-mono text-[9px] text-dim mt-1">
+                          {a.authorType === 'agent' ? 'Agente IA' : 'Equipe'} &middot; {timeAgo(a.createdAt)}
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
