@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap');
+
+/* ══════ Base ══════ */
+body {
+  background: #080808;
+  color: #EDE9E0;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ══════ Noise texture (Elyon) ══════ */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.022;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* ══════ Scrollbar ══════ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(201,168,76,.2); border-radius: 2px; }
+
+/* ══════ Animations ══════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-fadeUp { animation: fadeUp .4s ease both; }
+.animate-fadeIn { animation: fadeIn .2s ease; }
+.animate-scaleIn { animation: scaleIn .2s ease both; }
+.animate-slideInRight { animation: slideInRight .3s cubic-bezier(.4,0,.2,1); }
+
+/* ══════ Component utilities ══════ */
+.label-mono {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(237,233,224,.4);
+}
+
+.title-serif {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+.badge-gold {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  background: rgba(201,168,76,.12);
+  border: 1px solid rgba(201,168,76,.2);
+  color: #C9A84C;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+/* ══════ Focus states ══════ */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: rgba(201,168,76,.35) !important;
+}
+
+/* ══════ Select fix ══════ */
+select option {
+  background: #1e1e1e;
+}
