@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const codeFromUrl = searchParams.get('code') || ''
@@ -110,5 +110,13 @@ export default function RegisterPage() {
         </a>
       </p>
     </form>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="text-dim text-sm text-center py-10">Carregando...</div>}>
+      <RegisterForm />
+    </Suspense>
   )
 }
