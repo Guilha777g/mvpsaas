@@ -40,9 +40,9 @@ export async function GET(req: NextRequest) {
     ])
 
     // Get agent data only for phones that exist in the deals result set
-    const phoneNumbers = [...new Set(
+    const phoneNumbers = Array.from(new Set(
       dealsData.map(d => d.contact.phone).filter(Boolean) as string[]
-    )]
+    ))
     let agentData: Record<string, typeof agentLeads.$inferSelect> = {}
 
     if (phoneNumbers.length > 0) {
