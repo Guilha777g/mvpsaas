@@ -26,9 +26,16 @@ export default function PipelinePage() {
   const stages = data?.stages || []
 
   const filteredDeals = search
-    ? deals.filter((d: any) =>
-        `${d.contact?.name} ${d.contact?.company}`.toLowerCase().includes(search.toLowerCase())
-      )
+    ? deals.filter((d: any) => {
+        const q = search.toLowerCase()
+        const digits = q.replace(/\D/g, '')
+        const name = (d.contact?.name || '').toLowerCase()
+        const company = (d.contact?.company || '').toLowerCase()
+        const email = (d.contact?.email || '').toLowerCase()
+        const phone = (d.contact?.phone || '').toLowerCase()
+        const phoneDigits = phone.replace(/\D/g, '')
+        return name.includes(q) || company.includes(q) || email.includes(q) || phone.includes(q) || (digits && phoneDigits.includes(digits))
+      })
     : deals
 
   const today = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })

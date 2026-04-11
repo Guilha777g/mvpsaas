@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { contacts, deals, agentLeads } from '@/lib/db/schema'
-import { eq, and, desc, ilike, or } from 'drizzle-orm'
+import { eq, and, desc, ilike, or, sql } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
 import { isAdmin } from '@/lib/auth/admin'
 import { createContactSchema } from '@/lib/validations'
@@ -18,11 +18,14 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search')
 
     const tenantFilter = allTenants ? undefined : eq(contacts.tenantId, tid!)
+    const digits = search ? search.replace(/\D/g, '') : ''
     const searchFilter = search
       ? or(
           ilike(contacts.name, `%${search}%`),
           ilike(contacts.company, `%${search}%`),
-          ilike(contacts.phone, `%${search}%`)
+          ilike(contacts.email, `%${search}%`),
+          ilike(contacts.phone, `%${search}%`),
+          digits ? sql`regexp_replace(${contacts.phone}, '[^0-9]', '', 'g') LIKE ${'%' + digits + '%'}` : undefined
         )
       : undefined
 
