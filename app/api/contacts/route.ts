@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
           ilike(contacts.company, `%${search}%`),
           ilike(contacts.email, `%${search}%`),
           ilike(contacts.phone, `%${search}%`),
-          digits ? sql`regexp_replace(${contacts.phone}, '[^0-9]', '', 'g') LIKE ${'%' + digits + '%'}` : undefined
+          digits.length >= 4 ? sql`regexp_replace(${contacts.phone}, '[^0-9]', '', 'g') LIKE ${'%' + digits + '%'}` : undefined
         )
       : undefined
 

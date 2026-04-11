@@ -34,7 +34,7 @@ export default function PipelinePage() {
         const email = (d.contact?.email || '').toLowerCase()
         const phone = (d.contact?.phone || '').toLowerCase()
         const phoneDigits = phone.replace(/\D/g, '')
-        return name.includes(q) || company.includes(q) || email.includes(q) || phone.includes(q) || (digits && phoneDigits.includes(digits))
+        return name.includes(q) || company.includes(q) || email.includes(q) || phone.includes(q) || (digits.length >= 4 && phoneDigits.includes(digits))
       })
     : deals
 
