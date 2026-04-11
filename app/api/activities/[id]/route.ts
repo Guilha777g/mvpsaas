@@ -9,7 +9,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const session = await requireSession()
     const { id } = await params
 
-    const [deleted] = await db.delete(activities)
+    // Soft delete
+    const [deleted] = await db.update(activities)
+      .set({ deletedAt: new Date() })
       .where(and(eq(activities.id, id), eq(activities.tenantId, session.tenantId)))
       .returning()
 
@@ -17,7 +19,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Atividade não encontrada' }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true })
+    // Log de exclusão no histórico
+    await db.insert(activities).values({
+      tenantId: session.tenantId,
+      dealId: deleted.dealId,
+      contactId: deleted.contactId,
+      type: 'deletion',
+      content: `Atividade excluída: "${deleted.content}"`,
+      authorType: 'user',
+      authorId: session.userId,
+    })
+
+    return NextResponse.json({ success: true, deleted })
   } catch (error) {
     console.error('DELETE activity error:', error)
     return NextResponse.json({ error: 'Erro ao excluir atividade' }, { status: 500 })

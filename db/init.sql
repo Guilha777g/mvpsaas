@@ -5,6 +5,18 @@
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- ══════ INVITE CODES ══════
+CREATE TABLE IF NOT EXISTS invite_codes (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code          TEXT UNIQUE NOT NULL,
+  tenant_name   TEXT NOT NULL,
+  email         TEXT,
+  max_uses      INTEGER DEFAULT 1,
+  used_count    INTEGER DEFAULT 0,
+  expires_at    TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ══════ TENANTS ══════
 CREATE TABLE IF NOT EXISTS tenants (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -124,6 +136,7 @@ CREATE TABLE IF NOT EXISTS activities (
   metadata      JSONB DEFAULT '{}',
   author_type   TEXT DEFAULT 'system',
   author_id     UUID,
+  deleted_at    TIMESTAMPTZ DEFAULT NULL,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS activities_deal_idx ON activities(deal_id);

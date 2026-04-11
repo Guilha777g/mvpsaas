@@ -157,6 +157,7 @@ export const activities = pgTable('activities', {
   metadata: jsonb('metadata').default({}),
   authorType: text('author_type').default('system'),
   authorId: uuid('author_id'),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (table) => ({
   dealIdx: index('activities_deal_idx').on(table.dealId),

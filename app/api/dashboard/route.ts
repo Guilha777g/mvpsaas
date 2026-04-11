@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { deals, contacts, activities, pipelineStages, pipelines, agentLeads, tenants } from '@/lib/db/schema'
-import { eq, and, count, sum, desc, gte, inArray } from 'drizzle-orm'
+import { eq, and, count, sum, desc, gte, inArray, isNull } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
 import { isAdmin } from '@/lib/auth/admin'
 
@@ -122,13 +122,14 @@ export async function GET(req: NextRequest) {
           .from(activities)
           .leftJoin(contacts, eq(activities.contactId, contacts.id))
           .leftJoin(deals, eq(activities.dealId, deals.id))
+          .where(isNull(activities.deletedAt))
           .orderBy(desc(activities.createdAt))
           .limit(10)
       : await db.select(activityFields)
           .from(activities)
           .leftJoin(contacts, eq(activities.contactId, contacts.id))
           .leftJoin(deals, eq(activities.dealId, deals.id))
-          .where(eq(activities.tenantId, tid!))
+          .where(and(eq(activities.tenantId, tid!), isNull(activities.deletedAt)))
           .orderBy(desc(activities.createdAt))
           .limit(10)
 

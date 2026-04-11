@@ -36,9 +36,12 @@ export function DealDetailPanel({ dealId, deals, stages, onClose, onUpdated }: D
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
 
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+  const [deleteTimer, setDeleteTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
+
   const contactId = deal?.contact?.id
   const { data: activitiesData, mutate: mutateActivities } = useSWR(
-    contactId ? `/api/activities?contactId=${contactId}` : null,
+    contactId ? `/api/activities?contactId=${contactId}&includeDeleted=true` : null,
     fetcher
   )
 
@@ -212,12 +215,33 @@ export function DealDetailPanel({ dealId, deals, stages, onClose, onUpdated }: D
     }
   }
 
-  async function handleDeleteActivity(id: string) {
-    const res = await fetch(`/api/activities/${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      mutateActivities()
-      toast('Atividade excluída', 'info')
-    }
+  function handleDeleteActivity(id: string) {
+    // Marca visualmente como pendente de exclusão
+    setPendingDelete(id)
+
+    // Limpa timer anterior se existir
+    if (deleteTimer) clearTimeout(deleteTimer)
+
+    const timer = setTimeout(async () => {
+      // Executa soft delete após 5s sem undo
+      const res = await fetch(`/api/activities/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        mutateActivities()
+        globalMutate('/api/dashboard')
+      }
+      setPendingDelete(null)
+    }, 5000)
+
+    setDeleteTimer(timer)
+
+    toast('Atividade excluída', 'info', {
+      label: 'Desfazer',
+      onClick: () => {
+        clearTimeout(timer)
+        setPendingDelete(null)
+        setDeleteTimer(null)
+      },
+    })
   }
 
   async function handleEditActivity(id: string) {
@@ -241,6 +265,7 @@ export function DealDetailPanel({ dealId, deals, stages, onClose, onUpdated }: D
       case 'stage_change': return 'Pipeline'
       case 'handoff': return 'Handoff'
       case 'lead_edit': return 'Edição'
+      case 'deletion': return 'Exclusão'
       default: return 'Nota'
     }
   }
@@ -367,68 +392,93 @@ export function DealDetailPanel({ dealId, deals, stages, onClose, onUpdated }: D
                 <div className="text-xs text-dim font-light py-8 text-center">Nenhuma atividade ainda</div>
               ) : (
                 <div className="divide-y divide-white/[.04]">
-                  {activities.map((a: any) => (
-                    <div key={a.id} className="px-4 py-3 group hover:bg-surface-3/50 transition-colors">
-                      {editingId === a.id ? (
-                        <div className="flex gap-2">
-                          <input
-                            value={editContent}
-                            onChange={e => setEditContent(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') handleEditActivity(a.id)
-                              if (e.key === 'Escape') { setEditingId(null); setEditContent('') }
-                            }}
-                            autoFocus
-                            className="flex-1 bg-surface-3 border border-gold/30 rounded px-2 py-1.5 text-xs text-fg outline-none"
-                          />
-                          <button
-                            onClick={() => handleEditActivity(a.id)}
-                            className="text-[10px] text-gold font-mono"
-                          >
-                            OK
-                          </button>
-                          <button
-                            onClick={() => { setEditingId(null); setEditContent('') }}
-                            className="text-[10px] text-dim font-mono"
-                          >
-                            Esc
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs text-fg font-light leading-relaxed">{a.content}</div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="font-mono text-[9px] text-dim">{getActivityLabel(a.type)}</span>
-                                <span className="text-[9px] text-dim/60">{timeAgo(a.createdAt)}</span>
+                  {activities.map((a: any) => {
+                    const isDeleted = !!a.deletedAt
+                    const isPending = pendingDelete === a.id
+                    const isDeletionLog = a.type === 'deletion'
+
+                    return (
+                      <div
+                        key={a.id}
+                        className={`px-4 py-3 group transition-colors ${
+                          isDeleted || isPending
+                            ? 'opacity-40'
+                            : isDeletionLog
+                              ? 'opacity-60 bg-stage-red/[.03]'
+                              : 'hover:bg-surface-3/50'
+                        }`}
+                      >
+                        {editingId === a.id ? (
+                          <div className="flex gap-2">
+                            <input
+                              value={editContent}
+                              onChange={e => setEditContent(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') handleEditActivity(a.id)
+                                if (e.key === 'Escape') { setEditingId(null); setEditContent('') }
+                              }}
+                              autoFocus
+                              className="flex-1 bg-surface-3 border border-gold/30 rounded px-2 py-1.5 text-xs text-fg outline-none"
+                            />
+                            <button
+                              onClick={() => handleEditActivity(a.id)}
+                              className="text-[10px] text-gold font-mono"
+                            >
+                              OK
+                            </button>
+                            <button
+                              onClick={() => { setEditingId(null); setEditContent('') }}
+                              className="text-[10px] text-dim font-mono"
+                            >
+                              Esc
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className={`text-xs font-light leading-relaxed ${
+                                  isDeleted || isPending ? 'line-through text-dim' : 'text-fg'
+                                }`}>
+                                  {a.content}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className={`font-mono text-[9px] ${
+                                    isDeletionLog ? 'text-stage-red/70' : 'text-dim'
+                                  }`}>
+                                    {getActivityLabel(a.type)}
+                                  </span>
+                                  <span className="text-[9px] text-dim/60">{timeAgo(a.createdAt)}</span>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {a.authorType === 'user' && (
-                                <>
-                                  <button
-                                    onClick={() => { setEditingId(a.id); setEditContent(a.content) }}
-                                    className="p-1 rounded hover:bg-white/[.06] text-dim hover:text-fg transition-all"
-                                    title="Editar"
-                                  >
-                                    <Pencil className="w-3 h-3" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteActivity(a.id)}
-                                    className="p-1 rounded hover:bg-stage-red/10 text-dim hover:text-stage-red transition-all"
-                                    title="Excluir"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </>
+                              {!isDeleted && !isPending && !isDeletionLog && (
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {a.authorType === 'user' && (
+                                    <>
+                                      <button
+                                        onClick={() => { setEditingId(a.id); setEditContent(a.content) }}
+                                        className="p-1 rounded hover:bg-white/[.06] text-dim hover:text-fg transition-all"
+                                        title="Editar"
+                                      >
+                                        <Pencil className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteActivity(a.id)}
+                                        className="p-1 rounded hover:bg-stage-red/10 text-dim hover:text-stage-red transition-all"
+                                        title="Excluir"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               )}
                             </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>

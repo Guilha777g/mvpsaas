@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { activities } from '@/lib/db/schema'
-import { eq, and, desc, or } from 'drizzle-orm'
+import { eq, and, desc, or, isNull } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
 import { createActivitySchema } from '@/lib/validations'
 
@@ -12,8 +12,10 @@ export async function GET(req: NextRequest) {
     const dealId = searchParams.get('dealId')
     const contactId = searchParams.get('contactId')
 
+    const includeDeleted = searchParams.get('includeDeleted') === 'true'
     const conditions = [eq(activities.tenantId, session.tenantId)]
 
+    if (!includeDeleted) conditions.push(isNull(activities.deletedAt))
     if (dealId) conditions.push(eq(activities.dealId, dealId))
     if (contactId) conditions.push(eq(activities.contactId, contactId))
 
