@@ -11,38 +11,35 @@ export async function GET(req: NextRequest) {
     const session = await requireSession()
     const admin = isAdmin(session)
     const selectedTenant = new URL(req.url).searchParams.get('tenantId')
-    // Admin sem tenant selecionado: retorna vazio
-    if (admin && !selectedTenant) {
-      return NextResponse.json([])
-    }
+    const allTenants = admin && !selectedTenant
+    const tid = admin ? selectedTenant : session.tenantId
 
-    const tid = admin ? selectedTenant! : session.tenantId
     const { searchParams } = new URL(req.url)
     const search = searchParams.get('search')
 
-    let query = db.select()
+    const tenantFilter = allTenants ? undefined : eq(contacts.tenantId, tid!)
+    const searchFilter = search
+      ? or(
+          ilike(contacts.name, `%${search}%`),
+          ilike(contacts.company, `%${search}%`),
+          ilike(contacts.phone, `%${search}%`)
+        )
+      : undefined
+
+    const whereClause = tenantFilter && searchFilter
+      ? and(tenantFilter, searchFilter)
+      : tenantFilter || searchFilter || undefined
+
+    const contactList = await db.select()
       .from(contacts)
-      .where(
-        search
-          ? and(
-              eq(contacts.tenantId, tid),
-              or(
-                ilike(contacts.name, `%${search}%`),
-                ilike(contacts.company, `%${search}%`),
-                ilike(contacts.phone, `%${search}%`)
-              )
-            )
-          : eq(contacts.tenantId, tid)
-      )
+      .where(whereClause)
       .orderBy(desc(contacts.updatedAt))
       .limit(100)
 
-    const contactList = await query
-
     // Enrich with agent data
-    const agentRows = await db.select()
-      .from(agentLeads)
-      .where(eq(agentLeads.tenantId, tid))
+    const agentRows = allTenants
+      ? await db.select().from(agentLeads)
+      : await db.select().from(agentLeads).where(eq(agentLeads.tenantId, tid!))
 
     const agentByPhone: Record<string, typeof agentLeads.$inferSelect> = {}
     for (const row of agentRows) {

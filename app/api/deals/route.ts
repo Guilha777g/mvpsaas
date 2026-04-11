@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { deals, contacts, pipelineStages, pipelines, agentLeads } from '@/lib/db/schema'
-import { eq, and, desc, inArray } from 'drizzle-orm'
+import { eq, and, desc, inArray, SQL } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
 import { isAdmin } from '@/lib/auth/admin'
 import { createDealSchema } from '@/lib/validations'
@@ -11,42 +11,62 @@ export async function GET(req: NextRequest) {
     const session = await requireSession()
     const admin = isAdmin(session)
     const selectedTenant = new URL(req.url).searchParams.get('tenantId')
-    // Admin sem tenant selecionado: retorna vazio
-    if (admin && !selectedTenant) {
-      return NextResponse.json({ deals: [], stages: [] })
-    }
+    const allTenants = admin && !selectedTenant
+    const tid = admin ? selectedTenant : session.tenantId
 
-    const tid = admin ? selectedTenant! : session.tenantId
     const { searchParams } = new URL(req.url)
     const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 500)
 
-    // Get default pipeline
-    const [pipeline] = await db.select()
-      .from(pipelines)
-      .where(and(eq(pipelines.tenantId, tid), eq(pipelines.isDefault, true)))
-      .limit(1)
+    // Get pipelines + stages
+    let stages: any[] = []
+    if (allTenants) {
+      const allPipelines = await db.select().from(pipelines).where(eq(pipelines.isDefault, true))
+      if (allPipelines.length > 0) {
+        const allStages = await db.select()
+          .from(pipelineStages)
+          .where(inArray(pipelineStages.pipelineId, allPipelines.map(p => p.id)))
+          .orderBy(pipelineStages.position)
+        // Deduplicate by name (SPIN stages have same names across tenants)
+        const seen = new Map<string, any>()
+        for (const s of allStages) {
+          if (!seen.has(s.name)) seen.set(s.name, s)
+        }
+        stages = Array.from(seen.values())
+      }
+    } else {
+      const [pipeline] = await db.select()
+        .from(pipelines)
+        .where(and(eq(pipelines.tenantId, tid!), eq(pipelines.isDefault, true)))
+        .limit(1)
 
-    if (!pipeline) {
-      return NextResponse.json({ deals: [], stages: [] })
-    }
+      if (!pipeline) {
+        return NextResponse.json({ deals: [], stages: [] })
+      }
 
-    // Get stages + deals in parallel
-    const [stages, dealsData] = await Promise.all([
-      db.select()
+      stages = await db.select()
         .from(pipelineStages)
         .where(eq(pipelineStages.pipelineId, pipeline.id))
-        .orderBy(pipelineStages.position),
+        .orderBy(pipelineStages.position)
+    }
 
-      db.select({
-        deal: deals,
-        contact: contacts,
-      })
-        .from(deals)
-        .innerJoin(contacts, eq(deals.contactId, contacts.id))
-        .where(eq(deals.tenantId, tid))
-        .orderBy(desc(deals.updatedAt))
-        .limit(limit),
-    ])
+    // Get deals
+    const dealsQuery = db.select({
+      deal: deals,
+      contact: contacts,
+    })
+      .from(deals)
+      .innerJoin(contacts, eq(deals.contactId, contacts.id))
+      .orderBy(desc(deals.updatedAt))
+      .limit(limit)
+
+    const dealsData = allTenants
+      ? await dealsQuery
+      : await db.select({ deal: deals, contact: contacts })
+          .from(deals)
+          .innerJoin(contacts, eq(deals.contactId, contacts.id))
+          .where(eq(deals.tenantId, tid!))
+          .orderBy(desc(deals.updatedAt))
+          .limit(limit)
 
     // Get agent data only for phones that exist in the deals result set
     const phoneNumbers = Array.from(new Set(
@@ -55,12 +75,12 @@ export async function GET(req: NextRequest) {
     let agentData: Record<string, typeof agentLeads.$inferSelect> = {}
 
     if (phoneNumbers.length > 0) {
-      const agentRows = await db.select()
-        .from(agentLeads)
-        .where(and(
-          eq(agentLeads.tenantId, tid),
-          inArray(agentLeads.number, phoneNumbers)
-        ))
+      const agentRows = allTenants
+        ? await db.select().from(agentLeads).where(inArray(agentLeads.number, phoneNumbers))
+        : await db.select().from(agentLeads).where(and(
+            eq(agentLeads.tenantId, tid!),
+            inArray(agentLeads.number, phoneNumbers)
+          ))
 
       for (const row of agentRows) {
         if (row.number) {
@@ -79,7 +99,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       deals: enrichedDeals,
       stages,
-      pipeline,
     })
   } catch (error) {
     console.error('GET deals error:', error)
