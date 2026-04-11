@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   DndContext,
   DragEndEvent,
@@ -25,6 +25,10 @@ interface KanbanBoardProps {
 export function KanbanBoard({ initialDeals, stages, hideAiStages = false, onRefresh }: KanbanBoardProps) {
   const [deals, setDeals] = useState(initialDeals)
   const { toast } = useToast()
+
+  useEffect(() => {
+    setDeals(initialDeals)
+  }, [initialDeals])
   const [modalOpen, setModalOpen] = useState(false)
   const [modalStageId, setModalStageId] = useState<string | null>(null)
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null)

@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const cards: { label: string; value: string; sub: string; gold?: boolean; icon: LucideIcon }[] = [
     { label: 'Total no Pipeline', value: formatCurrency(stats.totalPipelineValue || 0), sub: `${stats.openDeals || 0} deals abertos`, gold: true, icon: TrendingUp },
     { label: 'Contatos', value: String(stats.totalContacts || 0), sub: 'cadastrados', icon: Users },
-    { label: 'Ganhos', value: String(stats.wonDeals || 0), sub: formatCurrency(stats.wonValue || 0) + ' fechados', icon: Trophy },
+    { label: 'Ganhos', value: formatCurrency(stats.wonValue || 0), sub: `${stats.wonDeals || 0} leads fechados`, icon: Trophy },
     { label: 'Taxa de Conversão', value: `${stats.conversionRate || 0}%`, sub: 'do pipeline total', gold: true, icon: Percent },
     { label: 'Perdidos', value: String(stats.lostDeals || 0), sub: 'não convertidos', icon: ThumbsDown },
     { label: 'Agente IA', value: String(stats.agentActive || 0), sub: `de ${stats.agentTotal || 0} leads — ativos 24h`, gold: true, icon: Bot },
