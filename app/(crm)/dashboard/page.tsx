@@ -2,7 +2,7 @@
 
 import useSWR from 'swr'
 import { Topbar } from '@/components/layout/topbar'
-import { formatCurrencyShort, timeAgo, formatShortDateTime } from '@/lib/utils'
+import { formatCurrency, formatCurrencyShort, timeAgo, formatShortDateTime } from '@/lib/utils'
 import { useAdmin } from '@/lib/admin-context'
 import { TrendingUp, Users, Trophy, Percent, ThumbsDown, Bot } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -19,9 +19,9 @@ export default function DashboardPage() {
   const recentActivity = data?.recentActivity || []
 
   const cards: { label: string; value: string; sub: string; gold?: boolean; icon: LucideIcon }[] = [
-    { label: 'Total no Pipeline', value: formatCurrencyShort(stats.totalPipelineValue || 0), sub: `${stats.openDeals || 0} deals abertos`, gold: true, icon: TrendingUp },
+    { label: 'Total no Pipeline', value: formatCurrency(stats.totalPipelineValue || 0), sub: `${stats.openDeals || 0} deals abertos`, gold: true, icon: TrendingUp },
     { label: 'Contatos', value: String(stats.totalContacts || 0), sub: 'cadastrados', icon: Users },
-    { label: 'Ganhos', value: String(stats.wonDeals || 0), sub: formatCurrencyShort(stats.wonValue || 0) + ' fechados', icon: Trophy },
+    { label: 'Ganhos', value: String(stats.wonDeals || 0), sub: formatCurrency(stats.wonValue || 0) + ' fechados', icon: Trophy },
     { label: 'Taxa de Conversão', value: `${stats.conversionRate || 0}%`, sub: 'do pipeline total', gold: true, icon: Percent },
     { label: 'Perdidos', value: String(stats.lostDeals || 0), sub: 'não convertidos', icon: ThumbsDown },
     { label: 'Agente IA', value: String(stats.agentActive || 0), sub: `de ${stats.agentTotal || 0} leads — ativos 24h`, gold: true, icon: Bot },
@@ -112,6 +112,9 @@ export default function DashboardPage() {
                     <div key={a.id} className="py-2.5 border-b border-white/[.04] last:border-0 hover:bg-surface-3/50 -mx-2 px-2 rounded transition-colors">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
+                          {a.tenantName && (
+                            <div className="font-mono text-[9px] tracking-wider text-purple-300 mb-0.5">{a.tenantName}</div>
+                          )}
                           {(a.contactName || a.dealTitle) && (
                             <div className="font-mono text-[10px] text-gold mb-0.5 truncate">
                               {a.contactName || a.dealTitle}

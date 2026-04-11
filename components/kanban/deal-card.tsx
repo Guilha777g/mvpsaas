@@ -25,6 +25,7 @@ interface DealCardProps {
       followup: number | null
       ultimamsgIa: string | Date | null
     } | null
+    tenantName?: string | null
   }
   index: number
   onClick: () => void
@@ -79,6 +80,13 @@ export function DealCard({ deal, index, onClick, onDelete }: DealCardProps) {
           </div>
         </div>
       </div>
+
+      {/* Tenant indicator (admin mode) */}
+      {deal.tenantName && (
+        <div className="font-mono text-[9px] tracking-wider px-[7px] py-[2px] rounded-sm bg-purple-500/10 border border-purple-500/20 text-purple-300 inline-block mb-1.5">
+          {deal.tenantName}
+        </div>
+      )}
 
       {/* Company */}
       {deal.contact.company && (

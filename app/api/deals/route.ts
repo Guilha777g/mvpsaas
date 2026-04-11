@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { deals, contacts, pipelineStages, pipelines, agentLeads } from '@/lib/db/schema'
+import { deals, contacts, pipelineStages, pipelines, agentLeads, tenants } from '@/lib/db/schema'
 import { eq, and, desc, inArray, SQL } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
 import { isAdmin } from '@/lib/auth/admin'
@@ -19,6 +19,8 @@ export async function GET(req: NextRequest) {
 
     // Get pipelines + stages
     let stages: any[] = []
+    // Map original stageId → consolidated stageId (for allTenants mode)
+    let stageIdMap: Record<string, string> = {}
     if (allTenants) {
       const allPipelines = await db.select().from(pipelines).where(eq(pipelines.isDefault, true))
       if (allPipelines.length > 0) {
@@ -26,10 +28,14 @@ export async function GET(req: NextRequest) {
           .from(pipelineStages)
           .where(inArray(pipelineStages.pipelineId, allPipelines.map(p => p.id)))
           .orderBy(pipelineStages.position)
-        // Deduplicate by name (SPIN stages have same names across tenants)
+        // Deduplicate by name and build remap
         const seen = new Map<string, any>()
         for (const s of allStages) {
-          if (!seen.has(s.name)) seen.set(s.name, s)
+          if (!seen.has(s.name)) {
+            seen.set(s.name, s)
+          }
+          // Map all stage IDs with this name to the canonical one
+          stageIdMap[s.id] = seen.get(s.name).id
         }
         stages = Array.from(seen.values())
       }
@@ -89,11 +95,21 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Get tenant names for admin "Todos" mode
+    let tenantNames: Record<string, string> = {}
+    if (allTenants) {
+      const tenantRows = await db.select({ id: tenants.id, name: tenants.name }).from(tenants)
+      for (const t of tenantRows) tenantNames[t.id] = t.name
+    }
+
     // Combine data
     const enrichedDeals = dealsData.map(({ deal, contact }) => ({
       ...deal,
+      // Remap stageId to consolidated stage for "Todos" mode
+      stageId: allTenants && stageIdMap[deal.stageId] ? stageIdMap[deal.stageId] : deal.stageId,
       contact,
       agentData: contact.phone ? agentData[contact.phone] || null : null,
+      tenantName: allTenants ? (tenantNames[deal.tenantId] || null) : null,
     }))
 
     return NextResponse.json({

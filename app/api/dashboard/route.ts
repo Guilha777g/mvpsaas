@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { deals, contacts, activities, pipelineStages, pipelines, agentLeads } from '@/lib/db/schema'
+import { deals, contacts, activities, pipelineStages, pipelines, agentLeads, tenants } from '@/lib/db/schema'
 import { eq, and, count, sum, desc, gte, inArray } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
 import { isAdmin } from '@/lib/auth/admin'
@@ -104,40 +104,45 @@ export async function GET(req: NextRequest) {
       : await db.select().from(contacts).where(eq(contacts.tenantId, tid!))
 
     // Recent activity with contact/deal context
+    const activityFields = {
+      id: activities.id,
+      type: activities.type,
+      content: activities.content,
+      authorType: activities.authorType,
+      createdAt: activities.createdAt,
+      contactId: activities.contactId,
+      dealId: activities.dealId,
+      contactName: contacts.name,
+      dealTitle: deals.title,
+      tenantId: activities.tenantId,
+    }
+
     const recentActivityRaw = allTenants
-      ? await db.select({
-          id: activities.id,
-          type: activities.type,
-          content: activities.content,
-          authorType: activities.authorType,
-          createdAt: activities.createdAt,
-          contactId: activities.contactId,
-          dealId: activities.dealId,
-          contactName: contacts.name,
-          dealTitle: deals.title,
-        })
+      ? await db.select(activityFields)
           .from(activities)
           .leftJoin(contacts, eq(activities.contactId, contacts.id))
           .leftJoin(deals, eq(activities.dealId, deals.id))
           .orderBy(desc(activities.createdAt))
           .limit(10)
-      : await db.select({
-          id: activities.id,
-          type: activities.type,
-          content: activities.content,
-          authorType: activities.authorType,
-          createdAt: activities.createdAt,
-          contactId: activities.contactId,
-          dealId: activities.dealId,
-          contactName: contacts.name,
-          dealTitle: deals.title,
-        })
+      : await db.select(activityFields)
           .from(activities)
           .leftJoin(contacts, eq(activities.contactId, contacts.id))
           .leftJoin(deals, eq(activities.dealId, deals.id))
           .where(eq(activities.tenantId, tid!))
           .orderBy(desc(activities.createdAt))
           .limit(10)
+
+    // Enrich with tenant names for admin "Todos"
+    let tenantNames: Record<string, string> = {}
+    if (allTenants) {
+      const tenantRows = await db.select({ id: tenants.id, name: tenants.name }).from(tenants)
+      for (const t of tenantRows) tenantNames[t.id] = t.name
+    }
+
+    const recentActivity = recentActivityRaw.map(a => ({
+      ...a,
+      tenantName: allTenants ? (tenantNames[a.tenantId] || null) : null,
+    }))
 
     // Agent stats
     const agentRows = allTenants
@@ -164,7 +169,7 @@ export async function GET(req: NextRequest) {
         agentTotal: agentRows.length,
       },
       stageStats,
-      recentActivity: recentActivityRaw,
+      recentActivity,
     })
   } catch (error) {
     console.error('Dashboard error:', error)
