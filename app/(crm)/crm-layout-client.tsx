@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { ToastProvider } from '@/components/ui/toast'
+import { AdminProvider } from '@/lib/admin-context'
 
 interface Tenant {
   id: string
@@ -30,20 +31,22 @@ export function CrmLayoutClient({ children, tenantName, dealCount, role, tenants
     : tenantName
 
   return (
-    <ToastProvider>
-      <div className="h-screen flex overflow-hidden">
-        <Sidebar
-          tenantName={displayName}
-          dealCount={role === 'admin' && !selectedTenantId ? 0 : dealCount}
-          role={role}
-          tenants={tenants}
-          selectedTenantId={selectedTenantId}
-          onSelectTenant={handleSelectTenant}
-        />
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {children}
-        </main>
-      </div>
-    </ToastProvider>
+    <AdminProvider role={role} selectedTenantId={selectedTenantId}>
+      <ToastProvider>
+        <div className="h-screen flex overflow-hidden">
+          <Sidebar
+            tenantName={displayName}
+            dealCount={role === 'admin' && !selectedTenantId ? 0 : dealCount}
+            role={role}
+            tenants={tenants}
+            selectedTenantId={selectedTenantId}
+            onSelectTenant={handleSelectTenant}
+          />
+          <main className="flex-1 flex flex-col overflow-hidden">
+            {children}
+          </main>
+        </div>
+      </ToastProvider>
+    </AdminProvider>
   )
 }

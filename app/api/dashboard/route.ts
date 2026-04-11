@@ -1,13 +1,21 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { deals, contacts, activities, pipelineStages, pipelines, agentLeads } from '@/lib/db/schema'
 import { eq, and, count, sum, desc, gte } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
+import { isAdmin } from '@/lib/auth/admin'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await requireSession()
-    const tid = session.tenantId
+    const admin = isAdmin(session)
+    const selectedTenant = new URL(req.url).searchParams.get('tenantId')
+    // Admin sem tenant selecionado: retorna vazio
+    if (admin && !selectedTenant) {
+      return NextResponse.json({ stats: {}, stageStats: [], recentActivity: [] })
+    }
+
+    const tid = admin ? selectedTenant! : session.tenantId
 
     // Get pipeline
     const [pipeline] = await db.select()

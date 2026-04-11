@@ -3,13 +3,16 @@
 import useSWR from 'swr'
 import { Topbar } from '@/components/layout/topbar'
 import { formatCurrencyShort, timeAgo, formatShortDateTime } from '@/lib/utils'
+import { useAdmin } from '@/lib/admin-context'
 import { TrendingUp, Users, Trophy, Percent, ThumbsDown, Bot } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function DashboardPage() {
-  const { data, isLoading } = useSWR('/api/dashboard', fetcher, { refreshInterval: 30000 })
+  const { selectedTenantId, role } = useAdmin()
+  const tenantParam = role === 'admin' && selectedTenantId ? `?tenantId=${selectedTenantId}` : ''
+  const { data, isLoading } = useSWR(`/api/dashboard${tenantParam}`, fetcher, { refreshInterval: 30000 })
 
   const stats = data?.stats || {}
   const stageStats = data?.stageStats || []

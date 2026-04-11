@@ -6,12 +6,15 @@ import { Topbar } from '@/components/layout/topbar'
 import { StatsBar } from '@/components/kanban/stats-bar'
 import { KanbanBoard } from '@/components/kanban/board'
 import { AddDealModal } from '@/components/kanban/add-deal-modal'
+import { useAdmin } from '@/lib/admin-context'
 import { EyeOff, Eye } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 export default function PipelinePage() {
-  const { data, mutate, isLoading } = useSWR('/api/deals', fetcher, {
+  const { selectedTenantId, role } = useAdmin()
+  const tenantParam = role === 'admin' && selectedTenantId ? `?tenantId=${selectedTenantId}` : ''
+  const { data, mutate, isLoading } = useSWR(`/api/deals${tenantParam}`, fetcher, {
     refreshInterval: 15000,
     revalidateOnFocus: true,
   })

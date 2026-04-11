@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Topbar } from '@/components/layout/topbar'
 import { cn, getInitials, getAvatarColor, timeAgo, SPIN_LABELS } from '@/lib/utils'
 import { useToast } from '@/components/ui/toast'
+import { useAdmin } from '@/lib/admin-context'
 import { Users, Trash2 } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
@@ -13,9 +14,11 @@ const fetcher = (url: string) => fetch(url).then(r => r.json())
 export default function ContactsPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { selectedTenantId, role } = useAdmin()
   const [search, setSearch] = useState('')
+  const tenantParam = role === 'admin' && selectedTenantId ? `&tenantId=${selectedTenantId}` : ''
   const { data: contacts = [], isLoading, mutate } = useSWR(
-    `/api/contacts${search ? `?search=${encodeURIComponent(search)}` : ''}`,
+    `/api/contacts${search ? `?search=${encodeURIComponent(search)}${tenantParam}` : (tenantParam ? `?${tenantParam.slice(1)}` : '')}`,
     fetcher,
     { refreshInterval: 30000 }
   )

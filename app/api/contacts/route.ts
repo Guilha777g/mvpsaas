@@ -3,11 +3,20 @@ import { db } from '@/lib/db'
 import { contacts, deals, agentLeads } from '@/lib/db/schema'
 import { eq, and, desc, ilike, or } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
+import { isAdmin } from '@/lib/auth/admin'
 import { createContactSchema } from '@/lib/validations'
 
 export async function GET(req: NextRequest) {
   try {
     const session = await requireSession()
+    const admin = isAdmin(session)
+    const selectedTenant = new URL(req.url).searchParams.get('tenantId')
+    // Admin sem tenant selecionado: retorna vazio
+    if (admin && !selectedTenant) {
+      return NextResponse.json([])
+    }
+
+    const tid = admin ? selectedTenant! : session.tenantId
     const { searchParams } = new URL(req.url)
     const search = searchParams.get('search')
 
@@ -16,14 +25,14 @@ export async function GET(req: NextRequest) {
       .where(
         search
           ? and(
-              eq(contacts.tenantId, session.tenantId),
+              eq(contacts.tenantId, tid),
               or(
                 ilike(contacts.name, `%${search}%`),
                 ilike(contacts.company, `%${search}%`),
                 ilike(contacts.phone, `%${search}%`)
               )
             )
-          : eq(contacts.tenantId, session.tenantId)
+          : eq(contacts.tenantId, tid)
       )
       .orderBy(desc(contacts.updatedAt))
       .limit(100)
@@ -33,7 +42,7 @@ export async function GET(req: NextRequest) {
     // Enrich with agent data
     const agentRows = await db.select()
       .from(agentLeads)
-      .where(eq(agentLeads.tenantId, session.tenantId))
+      .where(eq(agentLeads.tenantId, tid))
 
     const agentByPhone: Record<string, typeof agentLeads.$inferSelect> = {}
     for (const row of agentRows) {

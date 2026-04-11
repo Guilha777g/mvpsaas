@@ -3,18 +3,27 @@ import { db } from '@/lib/db'
 import { deals, contacts, pipelineStages, pipelines, agentLeads } from '@/lib/db/schema'
 import { eq, and, desc, inArray } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth/middleware'
+import { isAdmin } from '@/lib/auth/admin'
 import { createDealSchema } from '@/lib/validations'
 
 export async function GET(req: NextRequest) {
   try {
     const session = await requireSession()
+    const admin = isAdmin(session)
+    const selectedTenant = new URL(req.url).searchParams.get('tenantId')
+    // Admin sem tenant selecionado: retorna vazio
+    if (admin && !selectedTenant) {
+      return NextResponse.json({ deals: [], stages: [] })
+    }
+
+    const tid = admin ? selectedTenant! : session.tenantId
     const { searchParams } = new URL(req.url)
     const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 500)
 
     // Get default pipeline
     const [pipeline] = await db.select()
       .from(pipelines)
-      .where(and(eq(pipelines.tenantId, session.tenantId), eq(pipelines.isDefault, true)))
+      .where(and(eq(pipelines.tenantId, tid), eq(pipelines.isDefault, true)))
       .limit(1)
 
     if (!pipeline) {
@@ -34,7 +43,7 @@ export async function GET(req: NextRequest) {
       })
         .from(deals)
         .innerJoin(contacts, eq(deals.contactId, contacts.id))
-        .where(eq(deals.tenantId, session.tenantId))
+        .where(eq(deals.tenantId, tid))
         .orderBy(desc(deals.updatedAt))
         .limit(limit),
     ])
@@ -49,7 +58,7 @@ export async function GET(req: NextRequest) {
       const agentRows = await db.select()
         .from(agentLeads)
         .where(and(
-          eq(agentLeads.tenantId, session.tenantId),
+          eq(agentLeads.tenantId, tid),
           inArray(agentLeads.number, phoneNumbers)
         ))
 
